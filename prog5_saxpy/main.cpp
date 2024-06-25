@@ -37,11 +37,11 @@ int main() {
 
     float scale = 2.f;
 
-    float* arrayX = new float[N];
-    float* arrayY = new float[N];
-    float* resultSerial = new float[N];
-    float* resultISPC = new float[N];
-    float* resultTasks = new float[N];
+    float* arrayX = new alignas(32) float[N];
+    float* arrayY = new alignas(32) float[N];
+    float* resultSerial = new alignas(32) float[N];
+    float* resultISPC = new alignas(32) float[N];
+    float* resultTasks = new alignas(32) float[N];
 
     // initialize array values
     for (unsigned int i=0; i<N; i++)

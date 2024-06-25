@@ -72,6 +72,8 @@ int main(int argc, char** argv) {
     const unsigned int height = 1200;
     const int maxIterations = 256;
     int numThreads = 2;
+    int ret = scanf("%d", &numThreads);
+    if(ret != 1) printf("err\n");
 
     float x0 = -2;
     float x1 = 1;

@@ -241,7 +241,6 @@ void clampedExpSerial(float* values, int* exponents, float* output, int N) {
 }
 
 void clampedExpVector(float* values, int* exponents, float* output, int N) {
-
   //
   // CS149 STUDENTS TODO: Implement your vectorized version of
   // clampedExpSerial() here.
@@ -249,7 +248,45 @@ void clampedExpVector(float* values, int* exponents, float* output, int N) {
   // Your solution should work for any value of
   // N and VECTOR_WIDTH, not just when VECTOR_WIDTH divides N
   //
-  
+  //x ^ exp
+  __cs149_vec_float x;
+  __cs149_vec_int y;
+  __cs149_vec_float result;
+  __cs149_mask all;
+  __cs149_vec_int zero = _cs149_vset_int(0);
+  __cs149_vec_int one = _cs149_vset_int(1);
+
+  for(int i = 0; i < N; i += VECTOR_WIDTH) {
+    all = _cs149_init_ones();
+    _cs149_vload_float(x, values + i, all);
+    _cs149_vload_int(y, exponents + i, all);
+
+    // if y == 0
+    __cs149_mask y_is_zero;
+    _cs149_veq_int(y_is_zero, y, zero, all);
+    _cs149_vset_float(result, 1.f, y_is_zero);
+
+    // if y != 0
+    __cs149_mask y_not_zero = _cs149_mask_not(y_is_zero);
+    _cs149_vmove_float(result, x, y_not_zero);
+
+    _cs149_vsub_int(y, y, one, y_not_zero);
+    _cs149_veq_int(y_is_zero, y, zero, all);
+    y_not_zero = _cs149_mask_not(y_is_zero);
+    while(_cs149_cntbits(y_not_zero)) {
+      _cs149_vmult_float(result, result, x, y_not_zero);
+      _cs149_vsub_int(y, y, one, y_not_zero);
+      _cs149_veq_int(y_is_zero, y, zero, all);
+      y_not_zero = _cs149_mask_not(y_is_zero);
+    }
+
+    __cs149_vec_float upbound = _cs149_vset_float(9.999999f);
+    __cs149_mask bigger_than_upbound;
+    _cs149_vgt_float(bigger_than_upbound, result, upbound, all);
+    _cs149_vmove_float(result, upbound, bigger_than_upbound);
+
+    _cs149_vstore_float(output + i, result, all);
+  }
 }
 
 // returns the sum of all elements in values
@@ -270,11 +307,20 @@ float arraySumVector(float* values, int N) {
   //
   // CS149 STUDENTS TODO: Implement your vectorized version of arraySumSerial here
   //
-  
+  __cs149_vec_float result = _cs149_vset_float(0.0f);
+  __cs149_mask all = _cs149_init_ones();
   for (int i=0; i<N; i+=VECTOR_WIDTH) {
-
+    __cs149_vec_float x;
+    _cs149_vload_float(x, values + i, all);
+    _cs149_vadd_float(result, result, x, all);
   }
 
-  return 0.0;
+  float tmp[VECTOR_WIDTH];
+  _cs149_vstore_float(tmp, result, all);
+  for(int i = 1; i < VECTOR_WIDTH; ++i) {
+    tmp[0] += tmp[i];
+  }
+
+  return tmp[0];
 }
 
